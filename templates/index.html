@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โปรแกรมบอกสภาพอากาศ By Jula</title>
+
+  <!-- ฟอนต์ Pixel -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Press Start 2P', cursive;
+      background-image: url("/static/view.png");
+      background-size: cover;
+      background-position: center;
+      height: 100%;
+      width: 100%;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    h1 { text-align:center; margin:40px 0 20px; font-size:40px; color:white; }
+    .search-bar { text-align:center; margin:20px 0; }
+    .search-bar input, .search-bar button { font-family: 'Press Start 2P', cursive; }
+    .dashboard { display:flex; flex-direction:row; justify-content:space-around; flex-wrap:wrap; padding:20px; }
+    .card { background:white; padding:20px; border-radius:15px; border:5px solid #d4ffff; box-shadow:0 4px 6px rgba(0,0,0,0.1); width:30%; min-width:250px; margin-bottom:20px; display:flex; flex-direction:column; align-items:center; font-size:12px; }
+    #history { max-height:150px; overflow-y:auto; font-size:10px; background:#f0f0f0; padding:10px; border-radius:10px; text-align:left; }
+    .snow-container { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; opacity:0; }
+    .snowflake { position:absolute; top:-50px; width:50px; height:50px; background-image:url("/static/snowflake.png"); background-size:contain; background-repeat:no-repeat; pointer-events:none; }
+    @keyframes fall { 0% { transform:translateY(0) translateX(0);} 50% { transform:translateY(50vh) translateX(20px);} 100% { transform:translateY(100vh) translateX(0);} }
+    .blocx { position:fixed; bottom:0; left:0; width:100%; z-index:2; }
+    .blocx img { width:100%; height:auto; display:block; }
+    @media (max-width:768px) {
+      h1 { font-size:28px; }
+      .search-bar input { width:150px; font-size:10px; }
+      .search-bar button { font-size:10px; padding:8px 10px; }
+      .card { width:90%; font-size:10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="snow-container" id="snowContainer"></div>
+
+  <h1>ENVIRONMENT CHECK</h1>
+
+  <div class="search-bar">
+    <input id="cityInput" type="text" placeholder="พิมพ์ชื่อเมือง เช่น Tokyo">
+    <button onclick="fetchWeather()">ค้นหา</button>
+  </div>
+
+  <div class="dashboard">
+    <div class="card">
+      <h2>สภาพอากาศตอนนี้</h2>
+      <p id="city"></p>
+      <p id="temp"></p>
+      <p id="humidity"></p>
+      <p id="desc"></p>
+    </div>
+    <div class="card">
+      <h2>สภาพอากาศ</h2>
+      <div id="history"></div>
+    </div>
+    <div class="card">
+      <h2>คำแนะนำ</h2>
+      <p id="advice"></p>
+    </div>
+  </div>
+
+{#  <div class="blocx">#}
+{#    <img src="/static/snowfloor.png"/>#}
+{#  </div>#}
+
+  <script>
+    const historyDiv = document.getElementById('history');
+    const snowContainer = document.getElementById('snowContainer');
+    const cityInput = document.getElementById('cityInput');
+
+    async function fetchWeather() {
+      try {
+        const city = cityInput.value || "Bangkok";
+        const res = await fetch(`/api/weather?city=${city}`);
+        const data = await res.json();
+
+        document.getElementById("city").innerText = "🏢 เมือง: " + data.city;
+        document.getElementById("temp").innerText = "🌡️ อุณหภูมิ: " + data.temp + " °C";
+        document.getElementById("humidity").innerText = "💧 ความชื้น: " + data.humidity + " %";
+        document.getElementById("desc").innerText = "☁️ สภาพอากาศ: " + data.desc;
+        document.getElementById("advice").innerText = data.advice;
+
+        const entry = document.createElement('p');
+        entry.innerText = `${data.time} - ${data.city} ${data.temp} °C`;
+        historyDiv.appendChild(entry);
+        if(historyDiv.children.length > 10) historyDiv.removeChild(historyDiv.firstChild);
+
+        snowContainer.style.opacity = data.temp <= 60 ? "1" : "0";
+      } catch(err) { console.error(err); }
+    }
+
+    fetchWeather();
+  </script>
+</body>
+</html>
